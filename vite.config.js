@@ -1,8 +1,9 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/zakat-calculator/',
   plugins: [
     react(),
     VitePWA({
@@ -12,7 +13,7 @@ export default defineConfig({
         name: 'Zakat Calculator',
         short_name: 'Zakat Calc',
         description: 'Calculate your Zakat accurately — for Indian Muslims',
-        start_url: '/',
+        start_url: '/zakat-calculator/',
         display: 'standalone',
         background_color: '#FAFAF7',
         theme_color: '#1B6B3A',
