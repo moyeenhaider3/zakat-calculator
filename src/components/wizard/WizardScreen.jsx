@@ -51,6 +51,7 @@ export default function WizardScreen() {
       navigate('/results');
     } else {
       setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -59,12 +60,14 @@ export default function WizardScreen() {
       navigate('/');
     } else {
       setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleSkip = () => {
     if (currentStep < REVIEW_STEP) {
       setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 

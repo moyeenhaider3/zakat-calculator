@@ -206,33 +206,57 @@ export default function ResultsScreen() {
 
       <AdNative />
 
-      {!result.isLiable && (
-        <section className="card mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-            🤲 {isHindi ? 'स्वैच्छिक दान (सदक़ा)' : 'Voluntary Charity (Sadaqah)'}
+      {/* Voluntary Charity — always visible */}
+      <section className="card mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+          🤲 {isHindi ? 'स्वैच्छिक दान (सदक़ा)' : 'Voluntary Charity (Sadaqah)'}
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          {isHindi
+            ? 'आपकी ज़कात या सदक़ा कई ज़रूरतमंदों की ज़िंदगी बदल सकती है। यहाँ कुछ विश्वसनीय भारतीय ज़कात संगठन हैं:'
+            : 'Your Zakat or Sadaqah can transform lives. Here are some trusted Indian Zakat organizations:'}
+        </p>
+        <div className="space-y-2 mb-4">
+          {ZAKAT_ORGS.map((org) => (
+            <a
+              key={org.name}
+              href={org.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 
+                hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{org.name}</span>
+              <FiExternalLink className="w-4 h-4 text-gray-400" />
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* Community Support */}
+      <section className="card mb-6 animate-slide-up border-2 border-primary-200 dark:border-primary-800" style={{ animationDelay: '0.35s' }}>
+        <div className="text-center">
+          <span className="text-3xl mb-3 block">💚</span>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+            {isHindi ? 'हमारी कम्युनिटी को सपोर्ट करें' : 'Support Our Community'}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed max-w-md mx-auto">
             {isHindi
-              ? 'ज़कात देय नहीं होने पर भी स्वैच्छिक दान हमेशा प्रेरित है। यहाँ कुछ भारतीय ज़कात संगठन हैं:'
-              : 'Even when Zakat is not due, voluntary Sadaqah is always encouraged. Here are some Indian Zakat organizations:'}
+              ? 'यह ज़कात कैलकुलेटर किसी संगठन द्वारा फंड नहीं किया जाता — यह पूरी तरह से हमारी कम्युनिटी के भाइयों और बहनों के सहयोग से चलता है। आपका छोटा सा योगदान इस सेवा को ज़िंदा रखता है, ताकि लाखों मुसलमान मुफ़्त में अपनी ज़कात की गणना कर सकें। जज़ाकल्लाहु खैरन।'
+              : 'This Zakat Calculator is not funded by any organization — it is built and maintained entirely by our community. Your small contribution keeps this service alive, so that millions of Muslims can calculate their Zakat for free. Every rupee counts. JazakAllahu Khairan.'}
           </p>
-          <div className="space-y-2">
-            {ZAKAT_ORGS.map((org) => (
-              <a
-                key={org.name}
-                href={org.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 
-                  hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{org.name}</span>
-                <FiExternalLink className="w-4 h-4 text-gray-400" />
-              </a>
-            ))}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 inline-block mb-3 shadow-sm">
+            <img
+              src={new URL('../../assets/qr-code.png', import.meta.url).href}
+              alt="Scan to support"
+              className="w-48 h-48 mx-auto object-contain"
+            />
           </div>
-        </section>
-      )}
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            {isHindi ? 'स्कैन करके सीधे भुगतान करें' : 'Scan to pay directly via UPI'}
+          </p>
+        </div>
+      </section>
 
       <footer className="text-center text-xs text-gray-400 dark:text-gray-500 pt-4">
         <p>{isHindi
@@ -242,3 +266,4 @@ export default function ResultsScreen() {
     </div>
   );
 }
+
