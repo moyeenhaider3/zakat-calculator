@@ -34,7 +34,7 @@ export const ASSET_CATEGORIES = [
     label: 'Gold',
     labelHindi: 'सोना',
     icon: '🪙',
-    description: 'Gold jewelry, coins, bars — enter value or weight in grams/tola.',
+    description: 'Enter gold weight by karat (18K, 22K, 24K). Purity is applied automatically.',
     zakatRate: 0.025,
     isZakatable: true,
     requiresHawl: true,
@@ -44,7 +44,6 @@ export const ASSET_CATEGORIES = [
       meaning: 'Gold. Zakat on gold has been obligatory since the time of the Prophet ﷺ.',
     },
     hasWeightInput: true,
-    weightUnit: 'grams',
   },
   {
     id: 'silver',

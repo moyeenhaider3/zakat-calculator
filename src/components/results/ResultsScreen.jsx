@@ -14,9 +14,10 @@ const ZAKAT_ORGS = [
 
 export default function ResultsScreen() {
   const navigate = useNavigate();
-  const { result, currency, madhab, nisabStandard, language, resetCalculation } = useZakatStore();
+  const { result, currency, madhab, nisabStandard, language, resetCalculation, goldWeights, goldPrice } = useZakatStore();
   const isHindi = language === 'hi';
   const nisabInfo = getNisabExplanation(nisabStandard);
+  const goldKaratBreakdown = getGoldKaratBreakdown(goldWeights || {}, goldPrice || 0);
 
   useSEO({ title: 'Your Zakat Results — Zakat Calculator', noIndex: true });
 
@@ -55,7 +56,7 @@ export default function ResultsScreen() {
 
   const handleDownloadPDF = async () => {
     const { exportZakatSummary } = await import('../../utils/pdfExport');
-    exportZakatSummary(result, currency, madhab, nisabStandard);
+    exportZakatSummary(result, currency, madhab, nisabStandard, goldKaratBreakdown);
   };
 
   return (
@@ -133,21 +134,34 @@ export default function ResultsScreen() {
             {result.breakdown
               .filter((b) => b.amount > 0)
               .map((item) => (
-                <div key={item.categoryId} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{item.categoryLabel}</p>
-                    {item.note && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{item.note}</p>
-                    )}
+                <div key={item.categoryId} className="py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{item.categoryLabel}</p>
+                      {item.note && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{item.note}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(item.amount, currency)}
+                      </p>
+                      <p className="text-xs text-primary-500">
+                        Zakat: {formatCurrency(item.zakatAmount, currency)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(item.amount, currency)}
-                    </p>
-                    <p className="text-xs text-primary-500">
-                      Zakat: {formatCurrency(item.zakatAmount, currency)}
-                    </p>
-                  </div>
+                  {/* Per-karat sub-breakdown for gold */}
+                  {item.categoryId === 'gold' && goldKaratBreakdown.length > 0 && (
+                    <div className="mt-2 ml-2 space-y-1">
+                      {goldKaratBreakdown.map(({ karat, grams, pricePerGram, value }) => (
+                        <div key={karat} className="flex justify-between text-xs text-gray-400 dark:text-gray-500">
+                          <span>{karat} · {grams}g @ {formatCurrency(pricePerGram, 'INR')}/g</span>
+                          <span>{formatCurrency(value, currency)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
           </div>

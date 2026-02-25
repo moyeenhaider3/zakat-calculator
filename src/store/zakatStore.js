@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { calculateGoldValue } from '../utils/metalPrices';
 import { getNisabValue } from '../utils/nisab';
 import { calculateZakat } from '../utils/zakat';
 
@@ -18,6 +19,9 @@ const useZakatStore = create(
 
       // Asset weights for gold/silver (in grams)
       weights: {},
+
+      // Multi-karat gold weights (grams per karat)
+      goldWeights: { '24K': '', '22K': '', '18K': '' },
 
       // Deductions
       deductions: {
@@ -54,6 +58,11 @@ const useZakatStore = create(
       setWeight: (categoryId, weightGrams) =>
         set((state) => ({
           weights: { ...state.weights, [categoryId]: weightGrams },
+        })),
+
+      setGoldWeight: (karat, grams) =>
+        set((state) => ({
+          goldWeights: { ...state.goldWeights, [karat]: grams },
         })),
 
       setDeduction: (type, value) =>
@@ -95,13 +104,20 @@ const useZakatStore = create(
 
       calculateResult: () => {
         const state = get();
+
+        // Compute gold value from karat weights, then inject into assets
+        const goldValue = calculateGoldValue(state.goldWeights, state.goldPrice);
+        const assetsWithGold = goldValue > 0
+          ? { ...state.assets, gold: goldValue.toString() }
+          : state.assets;
+
         const nisabValue = getNisabValue(
           state.nisabStandard,
           state.goldPrice,
           state.silverPrice
         );
         const result = calculateZakat(
-          state.assets,
+          assetsWithGold,
           state.deductions,
           nisabValue,
           state.madhab
@@ -115,6 +131,7 @@ const useZakatStore = create(
         set({
           assets: {},
           weights: {},
+          goldWeights: { '24K': '', '22K': '', '18K': '' },
           deductions: { debts: 0, liabilities: 0 },
           currency: 'INR',
           madhab: 'hanafi',
@@ -134,6 +151,7 @@ const useZakatStore = create(
         set({
           assets: {},
           weights: {},
+          goldWeights: { '24K': '', '22K': '', '18K': '' },
           deductions: { debts: 0, liabilities: 0 },
           currentStep: 0,
           result: null,
@@ -145,6 +163,7 @@ const useZakatStore = create(
       partialize: (state) => ({
         assets: state.assets,
         weights: state.weights,
+        goldWeights: state.goldWeights,
         deductions: state.deductions,
         currency: state.currency,
         madhab: state.madhab,
