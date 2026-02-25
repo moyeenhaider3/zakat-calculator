@@ -16,8 +16,8 @@
 
 import { GRAMS_PER_TOLA } from './nisab';
 
-export const DEFAULT_GOLD_PRICE_INR = 16000;  // kept for backward compat
-export const DEFAULT_SILVER_PRICE_INR = 95;   // kept for backward compat
+export const DEFAULT_GOLD_PRICE_INR = 16100;  // kept for backward compat
+export const DEFAULT_SILVER_PRICE_INR = 290;   // kept for backward compat
 
 /**
  * Default gold (24K) and silver prices per gram by currency.
