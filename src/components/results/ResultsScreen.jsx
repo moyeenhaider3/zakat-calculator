@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useSEO from '../../hooks/useSEO';
 import useZakatStore from '../../store/zakatStore';
 import { formatCurrency } from '../../utils/currency';
+import { getGoldKaratBreakdown } from '../../utils/metalPrices';
 import { getNisabExplanation } from '../../utils/nisab';
 import AdNative from '../ads/AdNative';
 

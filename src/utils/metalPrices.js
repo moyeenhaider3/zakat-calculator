@@ -19,20 +19,15 @@
 import { GRAMS_PER_TOLA } from './nisab';
 
 const API_KEY = import.meta.env.VITE_GOLDPRICEZ_API_KEY || '60547206719a628ce2bda07af7870edf60547206';
-const BASE_URL = 'https://goldpricez.com/api/rates';
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
-const GOLD_CACHE_KEY = 'zc_gold_gpz_v2';   // bumped to bust stale cache
-const SILVER_CACHE_KEY = 'zc_silver_gpz_v2'; // bumped to bust stale cache
+const GOLD_CACHE_KEY = 'zc_gold_gpz_v3';
+const SILVER_CACHE_KEY = 'zc_silver_gpz_v3';
 
-// Fallback prices per gram in INR (conservative, used when API fails)
-const FALLBACK_GOLD_INR = 8000;
-const FALLBACK_SILVER_INR = 95;
+// Fallback prices per gram in INR
+const FALLBACK_GOLD_INR = 15000;
+const FALLBACK_SILVER_INR = 260;
 
-/**
- * Karat purity fractions.
- * Used to derive 22K and 18K prices from the 24K base price.
- */
 export const KARAT_PURITY = {
   '24K': 1.0,
   '22K': 0.916,
@@ -58,44 +53,62 @@ function writeCache(key, data) {
 // ─── API fetch ────────────────────────────────────────────────────────────────
 
 /**
- * Fetch gold + silver prices from goldpricez.com for INR.
- * NOTE: API response is a double-encoded JSON string, so we parse twice.
+ * Parse the goldpricez API response text.
+ * The API may return a double-encoded JSON string.
  */
-async function fetchFromGoldPriceZ() {
-  const url = `${BASE_URL}/currency/inr/measure/gram/metal/all`;
-  console.log('[metalPrices] Fetching:', url);
-
-  const response = await fetch(url, {
-    headers: { 'X-API-KEY': API_KEY },
-  });
-
-  if (!response.ok) throw new Error(`GoldPriceZ HTTP ${response.status}`);
-
-  // API returns a JSON-encoded string (double-encoded), so parse twice
-  const raw = await response.text();
-  console.log('[metalPrices] Raw response:', raw.slice(0, 200));
-
+function parseGoldPriceZResponse(raw) {
   let data;
-  try {
-    const first = JSON.parse(raw);
-    // If it's still a string, parse again
-    data = typeof first === 'string' ? JSON.parse(first) : first;
-  } catch (e) {
-    throw new Error(`Failed to parse GoldPriceZ response: ${e.message}`);
-  }
-
-  console.log('[metalPrices] Parsed gold:', data.gram_in_inr, '| silver:', data.silver_gram_in_inr);
+  const first = JSON.parse(raw);
+  data = typeof first === 'string' ? JSON.parse(first) : first;
 
   const goldPerGram = parseFloat(data.gram_in_inr);
-  const silverPerGram = parseFloat(data.silver_gram_in_inr);
+  const silverPerGram = parseFloat(data.silver_gram_in_inr) || 0;
+
+  console.log(`[metalPrices] Parsed → gold: ₹${goldPerGram}/g | silver: ₹${silverPerGram}/g`);
 
   if (!goldPerGram || isNaN(goldPerGram)) {
-    throw new Error(`Invalid gold price in response: ${data.gram_in_inr}`);
+    throw new Error(`Invalid gold price: ${data.gram_in_inr}`);
   }
-
   return { goldPerGram, silverPerGram };
 }
 
+/**
+ * Attempt 1 (dev + servers where CORS works): direct fetch via Vite proxy
+ * Attempt 2 (production CORS fallback): allorigins.win relay
+ */
+async function fetchFromGoldPriceZ() {
+  const ENDPOINT = '/rates/currency/inr/measure/gram/metal/all';
+  const DIRECT_URL = import.meta.env.DEV
+    ? `/api/goldpricez${ENDPOINT}`                                  // Vite proxy → no CORS
+    : `https://goldpricez.com/api${ENDPOINT}`;                     // may be blocked by CORS
+
+  const CORS_PROXY_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(
+    `https://goldpricez.com/api${ENDPOINT}`
+  )}`;
+
+  // --- Attempt 1: direct (dev proxy / server) ---
+  try {
+    console.log('[metalPrices] Attempt 1 (direct):', DIRECT_URL);
+    const res = await fetch(DIRECT_URL, { headers: { 'X-API-KEY': API_KEY } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.text();
+    return parseGoldPriceZResponse(raw);
+  } catch (e1) {
+    console.warn('[metalPrices] Direct fetch failed:', e1.message, '→ trying CORS proxy');
+  }
+
+  // --- Attempt 2: allorigins.win CORS proxy ---
+  try {
+    console.log('[metalPrices] Attempt 2 (CORS proxy):', CORS_PROXY_URL);
+    // allorigins.win doesn't forward custom headers — the API responds without key for this free tier
+    const res = await fetch(CORS_PROXY_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.text();
+    return parseGoldPriceZResponse(raw);
+  } catch (e2) {
+    throw new Error(`Both fetch attempts failed. Last: ${e2.message}`);
+  }
+}
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
