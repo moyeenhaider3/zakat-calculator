@@ -7,7 +7,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { calculateGoldValue } from '../utils/metalPrices';
+import { calculateGoldValue, getDefaultGoldPrice, getDefaultSilverPrice } from '../utils/metalPrices';
 import { getNisabValue } from '../utils/nisab';
 import { calculateZakat } from '../utils/zakat';
 
@@ -36,11 +36,12 @@ const useZakatStore = create(
       language: 'en',
       darkMode: false,
 
-      // Live prices
-      goldPrice: 0,
-      silverPrice: 0,
-      exchangeRates: null,
-      priceSource: null,
+      // Prices — dynamic defaults per currency, overridable via pencil icon
+      goldPrice: 16000,
+      silverPrice: 95,
+
+      // Manual price overrides per currency (e.g., { INR: { gold: null, silver: null } })
+      priceOverrides: {},
 
       // Wizard state
       currentStep: 0,
@@ -70,7 +71,15 @@ const useZakatStore = create(
           deductions: { ...state.deductions, [type]: value },
         })),
 
-      setCurrency: (code) => set({ currency: code }),
+      setCurrency: (code) =>
+        set((state) => {
+          const overrides = state.priceOverrides[code] || {};
+          return {
+            currency: code,
+            goldPrice: overrides.gold ?? getDefaultGoldPrice(code),
+            silverPrice: overrides.silver ?? getDefaultSilverPrice(code),
+          };
+        }),
       setMadhab: (m) => set({ madhab: m }),
       setNisabStandard: (s) => set({ nisabStandard: s }),
       setLanguage: (lang) => set({ language: lang }),
@@ -99,6 +108,27 @@ const useZakatStore = create(
 
       setExchangeRates: (rates) => set({ exchangeRates: rates }),
       setPriceSource: (source) => set({ priceSource: source }),
+
+      /**
+       * Manual price override for current currency.
+       * @param {'gold'|'silver'} metal
+       * @param {number|null} price  null = clear override (revert to default)
+       */
+      setPriceOverride: (metal, price) =>
+        set((state) => {
+          const currency = state.currency;
+          const currentOverrides = state.priceOverrides[currency] || { gold: null, silver: null };
+          const newCurrencyOverrides = { ...currentOverrides, [metal]: price };
+          const newOverrides = { ...state.priceOverrides, [currency]: newCurrencyOverrides };
+
+          return {
+            priceOverrides: newOverrides,
+            ...(metal === 'gold' && price !== null ? { goldPrice: price } : {}),
+            ...(metal === 'silver' && price !== null ? { silverPrice: price } : {}),
+            ...(metal === 'gold' && price === null ? { goldPrice: getDefaultGoldPrice(currency) } : {}),
+            ...(metal === 'silver' && price === null ? { silverPrice: getDefaultSilverPrice(currency) } : {}),
+          };
+        }),
 
       setCurrentStep: (step) => set({ currentStep: step }),
 
@@ -138,10 +168,11 @@ const useZakatStore = create(
           nisabStandard: 'silver',
           language: 'en',
           darkMode: false,
-          goldPrice: 0,
-          silverPrice: 0,
+          goldPrice: getDefaultGoldPrice('INR'),
+          silverPrice: getDefaultSilverPrice('INR'),
           exchangeRates: null,
           priceSource: null,
+          priceOverrides: {},
           currentStep: 0,
           result: null,
         });
@@ -172,6 +203,7 @@ const useZakatStore = create(
         darkMode: state.darkMode,
         goldPrice: state.goldPrice,
         silverPrice: state.silverPrice,
+        priceOverrides: state.priceOverrides,
         currentStep: state.currentStep,
       }),
     }

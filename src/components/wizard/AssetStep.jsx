@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiInfo } from 'react-icons/fi';
+import { FiEdit2, FiInfo, FiRefreshCw, FiX } from 'react-icons/fi';
 import useZakatStore from '../../store/zakatStore';
 import { formatCurrency, getCurrencyInfo } from '../../utils/currency';
 import {
@@ -7,18 +7,95 @@ import {
     calculateGoldValue,
     calculateMetalValue,
     gramsToTola,
-    tolaToGrams,
+    tolaToGrams
 } from '../../utils/metalPrices';
 
 const KARATS = ['24K', '22K', '18K'];
 
+// ─── Price Edit Dialog ────────────────────────────────────────────────────────
+
+function PriceEditDialog({ metal, currentPrice, hasOverride, onSave, onReset, onClose }) {
+  const [value, setValue] = useState(currentPrice ? Math.round(currentPrice).toString() : '');
+  const label = metal === 'gold' ? 'Gold (24K)' : 'Silver';
+
+  const handleSave = () => {
+    const price = parseFloat(value);
+    if (!price || price <= 0) return;
+    onSave(price);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5 animate-slide-up">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Set {label} Price</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Price per gram ({getCurrencyInfo(useZakatStore.getState().currency)?.symbol || '₹'})
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+              {getCurrencyInfo(useZakatStore.getState().currency)?.symbol || '₹'}
+            </span>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="e.g. 7500"
+              className="input-field pl-10 text-lg font-semibold"
+              min="1"
+              step="1"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+            />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            Current: {currentPrice ? `${formatCurrency(currentPrice, useZakatStore.getState().currency)}/g` : '—'}
+            {hasOverride && <span className="ml-2 text-amber-500 font-medium">● Manual override</span>}
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleSave}
+            disabled={!parseFloat(value) || parseFloat(value) <= 0}
+            className="flex-1 btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save Price
+          </button>
+          {hasOverride && (
+            <button
+              onClick={onReset}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <FiRefreshCw className="w-4 h-4" />
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // ─── Multi-karat gold input ───────────────────────────────────────────────────
 
 function GoldWeightInput({ goldPrice, currency, language }) {
-  const { goldWeights, setGoldWeight, setAsset } = useZakatStore();
+  const { goldWeights, setGoldWeight, setAsset, priceOverrides, setPriceOverride } = useZakatStore();
   const isHindi = language === 'hi';
-  // Track tola display values separately (derived from grams)
   const [tolaDisplay, setTolaDisplay] = useState({ '24K': '', '22K': '', '18K': '' });
+  const [showDialog, setShowDialog] = useState(false);
+  const hasOverride = !!priceOverrides?.[currency]?.gold;
 
   const handleGramsChange = (karat, val) => {
     if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
@@ -94,16 +171,26 @@ function GoldWeightInput({ goldPrice, currency, language }) {
         </div>
       ))}
 
-      {/* Price + Total */}
+      {/* Price row + pencil icon */}
       <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1">
         {goldPrice > 0 && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-            24K: {formatCurrency(goldPrice, 'INR')}/g
-            {' · '}
-            22K: {formatCurrency(Math.round(goldPrice * 0.916), 'INR')}/g
-            {' · '}
-            18K: {formatCurrency(Math.round(goldPrice * 0.75), 'INR')}/g
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+              24K: {formatCurrency(goldPrice, currency)}/g
+              {' · '}
+              22K: {formatCurrency(Math.round(goldPrice * 0.916), currency)}/g
+              {' · '}
+              18K: {formatCurrency(Math.round(goldPrice * 0.75), currency)}/g
+              {hasOverride && <span className="ml-1 text-amber-500"> ●</span>}
+            </p>
+            <button
+              onClick={() => setShowDialog(true)}
+              className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0"
+              title="Edit price manually"
+            >
+              <FiEdit2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
         {totalValue > 0 && (
           <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 text-center">
@@ -111,17 +198,49 @@ function GoldWeightInput({ goldPrice, currency, language }) {
             {' '}{symbol}{totalValue.toLocaleString('en-IN')}
           </p>
         )}
+
+        {/* Verify hint */}
+        <div className="flex items-start gap-2 mt-1 px-1 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
+          <FiInfo className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+            {isHindi
+              ? 'सटीक परिणाम के लिए वर्तमान 24K सोने की क़ीमत जाँचें। अंतर ज़्यादा हो तो ✏️ से अपडेट करें।'
+              : 'For accurate results, verify the current 24K gold rate (e.g. goldprice.org). If it differs significantly, tap ✏️ to correct it.'}
+          </p>
+        </div>
       </div>
+
+      {/* Price edit dialog */}
+      {showDialog && (
+        <PriceEditDialog
+          metal="gold"
+          currentPrice={goldPrice}
+          hasOverride={hasOverride}
+          onClose={() => setShowDialog(false)}
+          onSave={(price) => {
+            setPriceOverride('gold', price);
+            setShowDialog(false);
+          }}
+          onReset={() => {
+            setPriceOverride('gold', null);
+            setShowDialog(false);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Silver / generic weight input ───────────────────────────────────────────
 
-function WeightInput({ category, goldPrice, silverPrice, setAsset, setWeight, language, weights }) {
+function WeightInput({ category, goldPrice, silverPrice, setAsset, setWeight, language, weights, currency }) {
+  const { priceOverrides, setPriceOverride } = useZakatStore();
   const isHindi = language === 'hi';
   const weightValue = weights[category.id] || '';
-  const price = category.id === 'silver' ? silverPrice : goldPrice;
+  const isSilver = category.id === 'silver';
+  const price = isSilver ? silverPrice : goldPrice;
+  const [showDialog, setShowDialog] = useState(false);
+  const hasOverride = isSilver ? !!priceOverrides?.[currency]?.silver : !!priceOverrides?.[currency]?.gold;
 
   const handleWeightChange = (e, unit) => {
     const val = e.target.value;
@@ -174,9 +293,53 @@ function WeightInput({ category, goldPrice, silverPrice, setAsset, setWeight, la
         </div>
       </div>
       {price > 0 && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-          {formatCurrency(price, 'INR')}/gram
-        </p>
+        <div className="flex items-center justify-center gap-2">
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+            {formatCurrency(price, currency)}/gram
+            {hasOverride && <span className="ml-1 text-amber-500"> ●</span>}
+          </p>
+          <button
+            onClick={() => setShowDialog(true)}
+            className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0"
+            title="Edit price manually"
+          >
+            <FiEdit2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Price edit dialog */}
+      {showDialog && (
+        <PriceEditDialog
+          metal={isSilver ? 'silver' : 'gold'}
+          currentPrice={price}
+          hasOverride={hasOverride}
+          onClose={() => setShowDialog(false)}
+          onSave={(newPrice) => {
+            setPriceOverride(isSilver ? 'silver' : 'gold', newPrice);
+            setShowDialog(false);
+          }}
+          onReset={() => {
+            if (isSilver) {
+              setPriceOverride('silver', null);
+            } else {
+              setPriceOverride('gold', null);
+            }
+            setShowDialog(false);
+          }}
+        />
+      )}
+
+      {/* Verify hint — shown for silver */}
+      {isSilver && price > 0 && (
+        <div className="flex items-start gap-2 px-1 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
+          <FiInfo className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+            {isHindi
+              ? 'सटीक परिणाम के लिए वर्तमान चांदी की क़ीमत जाँचें। अंतर ज़्यादा हो तो ✏️ से अपडेट करें।'
+              : 'For accurate results, verify the current silver rate. If it differs significantly, tap ✏️ to correct it.'}
+          </p>
+        </div>
       )}
     </div>
   );
@@ -247,6 +410,7 @@ export default function AssetStep({ category }) {
           setWeight={setWeight}
           language={language}
           weights={weights}
+          currency={currency}
         />
       ) : null}
 

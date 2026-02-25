@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { FiArrowLeft, FiArrowRight, FiSkipForward } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import useSEO from '../../hooks/useSEO';
 import useZakatStore from '../../store/zakatStore';
 import { ASSET_CATEGORIES } from '../../utils/assetTypes';
 import { fetchExchangeRates } from '../../utils/currency';
-import { fetchGoldPriceINR, fetchSilverPriceINR } from '../../utils/metalPrices';
 import StickyFooter from '../ui/StickyFooter';
 import AssetStep from './AssetStep';
 import DeductionsStep from './DeductionsStep';
@@ -20,28 +19,16 @@ const TOTAL_STEPS = ASSET_CATEGORIES.length + 3;
 
 export default function WizardScreen() {
   const navigate = useNavigate();
-  const { currentStep, setCurrentStep, setPrices, setExchangeRates, setPriceSource } = useZakatStore();
-  const [pricesLoaded, setPricesLoaded] = useState(false);
+  const { currentStep, setCurrentStep, setExchangeRates } = useZakatStore();
 
   useSEO({
     title: `Calculate Zakat — Step ${currentStep + 1} of ${TOTAL_STEPS}`,
     noIndex: true,
   });
 
-  // Fetch live prices on mount
+  // Fetch exchange rates only (needed for multi-currency display)
   useEffect(() => {
-    async function loadPrices() {
-      const [gold, silver, exchange] = await Promise.all([
-        fetchGoldPriceINR(),
-        fetchSilverPriceINR(),
-        fetchExchangeRates('INR'),
-      ]);
-      setPrices(gold.pricePerGram, silver.pricePerGram);
-      setExchangeRates(exchange.rates);
-      setPriceSource(gold.source);
-      setPricesLoaded(true);
-    }
-    loadPrices();
+    fetchExchangeRates('INR').then(({ rates }) => setExchangeRates(rates));
   }, []);
 
   const handleNext = () => {
@@ -113,13 +100,7 @@ export default function WizardScreen() {
         </p>
       </div>
 
-      {/* Loading indicator for prices */}
-      {!pricesLoaded && currentStep > SETTINGS_STEP && (
-        <div className="mb-4 px-3 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg text-sm text-accent-700 dark:text-accent-300 flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-accent-300 border-t-accent-600 rounded-full animate-spin" />
-          Fetching live gold & silver prices...
-        </div>
-      )}
+
 
       {/* Step content */}
       <div className="animate-fade-in" key={currentStep}>

@@ -4,16 +4,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: '/zakat-calculator/',
-  server: {
-    proxy: {
-      '/api/goldpricez': {
-        target: 'https://goldpricez.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/goldpricez/, '/api'),
-        secure: true,
-      },
-    },
-  },
   plugins: [
     react(),
     VitePWA({

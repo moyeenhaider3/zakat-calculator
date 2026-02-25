@@ -1,14 +1,12 @@
 /**
- * Gold & Silver Price Fetcher + Calculation Engine
+ * Metal Price Calculation Engine
  *
- * API: goldpricez.com
- *   GET https://goldpricez.com/api/rates/currency/inr/measure/gram/metal/all
- *   Header: X-API-KEY: <key>
+ * No API calls. Prices are set manually by the user via the pencil icon,
+ * otherwise default hardcoded values are used.
  *
- *   Response fields used:
- *     gram_in_inr          → 24K gold price per gram in INR
- *     silver_gram_in_inr   → Silver price per gram in INR
- *     (or gram_in_usd / silver_gram_in_usd for other currencies)
+ * Default prices (Feb 2026 India estimate — verify before use):
+ *   Gold 24K: ₹16,000/g
+ *   Silver:   ₹95/g
  *
  * Karat purity fractions:
  *   24K → 1.000 | 22K → 0.916 | 18K → 0.750
@@ -18,15 +16,37 @@
 
 import { GRAMS_PER_TOLA } from './nisab';
 
-const API_KEY = import.meta.env.VITE_GOLDPRICEZ_API_KEY || '60547206719a628ce2bda07af7870edf60547206';
-const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+export const DEFAULT_GOLD_PRICE_INR = 16000;  // kept for backward compat
+export const DEFAULT_SILVER_PRICE_INR = 95;   // kept for backward compat
 
-const GOLD_CACHE_KEY = 'zc_gold_gpz_v3';
-const SILVER_CACHE_KEY = 'zc_silver_gpz_v3';
+/**
+ * Default gold (24K) and silver prices per gram by currency.
+ * Values are conservative estimates for Feb 2026.
+ * Users can override via the pencil icon at any time.
+ *
+ * Gold ~$93/g (~₹16,000/g) · Silver ~$0.93/g (~₹95/g)
+ */
+export const DEFAULT_METAL_PRICES = {
+  /*        gold/g         silver/g   */
+  INR: { gold: 16100,      silver: 290   },
+  USD: { gold: 160,        silver: 2.4   },
+  GBP: { gold: 117,        silver: 1.8   },
+  EUR: { gold: 134,        silver: 2.1   },
+  AED: { gold: 588,        silver: 8.8   },
+  SAR: { gold: 611,        silver: 9.1   },
+  MYR: { gold: 740,        silver: 11.0  },
+  CAD: { gold: 215,        silver: 3.2   },
+};
 
-// Fallback prices per gram in INR
-const FALLBACK_GOLD_INR = 15000;
-const FALLBACK_SILVER_INR = 260;
+/** Get default gold price for a given currency (falls back to INR). */
+export function getDefaultGoldPrice(currency) {
+  return DEFAULT_METAL_PRICES[currency]?.gold ?? DEFAULT_METAL_PRICES.INR.gold;
+}
+
+/** Get default silver price for a given currency (falls back to INR). */
+export function getDefaultSilverPrice(currency) {
+  return DEFAULT_METAL_PRICES[currency]?.silver ?? DEFAULT_METAL_PRICES.INR.silver;
+}
 
 export const KARAT_PURITY = {
   '24K': 1.0,
@@ -34,164 +54,13 @@ export const KARAT_PURITY = {
   '18K': 0.75,
 };
 
-// ─── Cache helpers ────────────────────────────────────────────────────────────
-
-function readCache(key) {
-  try {
-    const cached = JSON.parse(localStorage.getItem(key));
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached;
-  } catch { /* corrupt */ }
-  return null;
-}
-
-function writeCache(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify({ ...data, timestamp: Date.now() }));
-  } catch { /* quota exceeded */ }
-}
-
-// ─── API fetch ────────────────────────────────────────────────────────────────
-
-/**
- * Parse the goldpricez API response text.
- * The API may return a double-encoded JSON string.
- */
-function parseGoldPriceZResponse(raw) {
-  let data;
-  const first = JSON.parse(raw);
-  data = typeof first === 'string' ? JSON.parse(first) : first;
-
-  const goldPerGram = parseFloat(data.gram_in_inr);
-  const silverPerGram = parseFloat(data.silver_gram_in_inr) || 0;
-
-  console.log(`[metalPrices] Parsed → gold: ₹${goldPerGram}/g | silver: ₹${silverPerGram}/g`);
-
-  if (!goldPerGram || isNaN(goldPerGram)) {
-    throw new Error(`Invalid gold price: ${data.gram_in_inr}`);
-  }
-  return { goldPerGram, silverPerGram };
-}
-
-/**
- * Attempt 1 (dev + servers where CORS works): direct fetch via Vite proxy
- * Attempt 2 (production CORS fallback): allorigins.win relay
- */
-async function fetchFromGoldPriceZ() {
-  const ENDPOINT = '/rates/currency/inr/measure/gram/metal/all';
-  const DIRECT_URL = import.meta.env.DEV
-    ? `/api/goldpricez${ENDPOINT}`                                  // Vite proxy → no CORS
-    : `https://goldpricez.com/api${ENDPOINT}`;                     // may be blocked by CORS
-
-  const CORS_PROXY_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(
-    `https://goldpricez.com/api${ENDPOINT}`
-  )}`;
-
-  // --- Attempt 1: direct (dev proxy / server) ---
-  try {
-    console.log('[metalPrices] Attempt 1 (direct):', DIRECT_URL);
-    const res = await fetch(DIRECT_URL, { headers: { 'X-API-KEY': API_KEY } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const raw = await res.text();
-    return parseGoldPriceZResponse(raw);
-  } catch (e1) {
-    console.warn('[metalPrices] Direct fetch failed:', e1.message, '→ trying CORS proxy');
-  }
-
-  // --- Attempt 2: allorigins.win CORS proxy ---
-  try {
-    console.log('[metalPrices] Attempt 2 (CORS proxy):', CORS_PROXY_URL);
-    // allorigins.win doesn't forward custom headers — the API responds without key for this free tier
-    const res = await fetch(CORS_PROXY_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const raw = await res.text();
-    return parseGoldPriceZResponse(raw);
-  } catch (e2) {
-    throw new Error(`Both fetch attempts failed. Last: ${e2.message}`);
-  }
-}
-
-// ─── Public API ───────────────────────────────────────────────────────────────
-
-/**
- * Fetch 24K gold price per gram in INR.
- */
-export async function fetchGoldPriceINR() {
-  // Check cache
-  const cached = readCache(GOLD_CACHE_KEY);
-  if (cached?.pricePerGram) {
-    return {
-      pricePerGram: cached.pricePerGram,
-      pricePerTola: Math.round(cached.pricePerGram * GRAMS_PER_TOLA * 100) / 100,
-      source: 'cache',
-      lastUpdated: new Date(cached.timestamp),
-    };
-  }
-
-  try {
-    const { goldPerGram } = await fetchFromGoldPriceZ();
-    writeCache(GOLD_CACHE_KEY, { pricePerGram: goldPerGram });
-    console.log(`[metalPrices] Gold 24K: ₹${goldPerGram}/g (api)`);
-    return {
-      pricePerGram: goldPerGram,
-      pricePerTola: Math.round(goldPerGram * GRAMS_PER_TOLA * 100) / 100,
-      source: 'api',
-      lastUpdated: new Date(),
-    };
-  } catch (err) {
-    console.warn('[metalPrices] Gold fetch failed:', err.message);
-  }
-
-  return {
-    pricePerGram: FALLBACK_GOLD_INR,
-    pricePerTola: Math.round(FALLBACK_GOLD_INR * GRAMS_PER_TOLA * 100) / 100,
-    source: 'fallback',
-    lastUpdated: null,
-  };
-}
-
-/**
- * Fetch silver price per gram in INR.
- */
-export async function fetchSilverPriceINR() {
-  const cached = readCache(SILVER_CACHE_KEY);
-  if (cached?.pricePerGram) {
-    return {
-      pricePerGram: cached.pricePerGram,
-      pricePerTola: Math.round(cached.pricePerGram * GRAMS_PER_TOLA * 100) / 100,
-      source: 'cache',
-      lastUpdated: new Date(cached.timestamp),
-    };
-  }
-
-  try {
-    const { silverPerGram } = await fetchFromGoldPriceZ();
-    writeCache(SILVER_CACHE_KEY, { pricePerGram: silverPerGram });
-    console.log(`[metalPrices] Silver: ₹${silverPerGram}/g (api)`);
-    return {
-      pricePerGram: silverPerGram,
-      pricePerTola: Math.round(silverPerGram * GRAMS_PER_TOLA * 100) / 100,
-      source: 'api',
-      lastUpdated: new Date(),
-    };
-  } catch (err) {
-    console.warn('[metalPrices] Silver fetch failed:', err.message);
-  }
-
-  return {
-    pricePerGram: FALLBACK_SILVER_INR,
-    pricePerTola: Math.round(FALLBACK_SILVER_INR * GRAMS_PER_TOLA * 100) / 100,
-    source: 'fallback',
-    lastUpdated: null,
-  };
-}
-
 // ─── Gold calculation engine ──────────────────────────────────────────────────
 
 /**
  * Calculate total gold value in INR from multi-karat entries.
  *
  * @param {Object} karatWeights  e.g. { '24K': 10, '22K': 20, '18K': 5 } (grams)
- * @param {number} pricePerGram24K  Current 24K gold price per gram in INR
+ * @param {number} pricePerGram24K  24K gold price per gram in INR
  * @returns {number} Total market value in INR
  */
 export function calculateGoldValue(karatWeights, pricePerGram24K) {
@@ -205,11 +74,7 @@ export function calculateGoldValue(karatWeights, pricePerGram24K) {
 }
 
 /**
- * Get per-karat value breakdown (for Results + PDF display).
- *
- * @param {Object} karatWeights
- * @param {number} pricePerGram24K
- * @returns {Array<{ karat, grams, purity, pricePerGram, value }>}
+ * Get per-karat breakdown for Results + PDF display.
  */
 export function getGoldKaratBreakdown(karatWeights, pricePerGram24K) {
   return Object.entries(karatWeights)
@@ -240,7 +105,7 @@ export function tolaToGrams(tola) {
   return Math.round(tola * GRAMS_PER_TOLA * 1000) / 1000;
 }
 
-/** Legacy helper kept for backward compatibility with silver/other metals */
+/** Legacy helper for silver/other metals */
 export function calculateMetalValue(weightGrams, pricePerGram) {
   return Math.round(weightGrams * pricePerGram * 100) / 100;
 }
