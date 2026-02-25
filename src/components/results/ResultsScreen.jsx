@@ -206,8 +206,33 @@ export default function ResultsScreen() {
 
       <AdNative />
 
-      {/* Voluntary Charity — always visible */}
-      <section className="card mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+      {/* Community Support — first */}
+      <section className="card mb-6 animate-slide-up border-2 border-primary-200 dark:border-primary-800" style={{ animationDelay: '0.3s' }}>
+        <div className="text-center">
+          <span className="text-3xl mb-3 block">💚</span>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+            {isHindi ? 'हमारी कम्युनिटी को सपोर्ट करें' : 'Support Our Community'}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed max-w-md mx-auto">
+            {isHindi
+              ? 'यह ज़कात कैलकुलेटर किसी संगठन द्वारा फंड नहीं किया जाता — यह पूरी तरह से हमारी कम्युनिटी के भाइयों और बहनों के सहयोग से चलता है। आपका छोटा सा योगदान इस सेवा को ज़िंदा रखता है, ताकि लाखों मुसलमान मुफ़्त में अपनी ज़कात की गणना कर सकें। जज़ाकल्लाहु खैरन।'
+              : 'This Zakat Calculator is not funded by any organization — it is built and maintained entirely by our community. Your small contribution keeps this service alive, so that millions of Muslims can calculate their Zakat for free. Every rupee counts. JazakAllahu Khairan.'}
+          </p>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 inline-block mb-3 shadow-sm">
+            <img
+              src={new URL('../../assets/qr-code.png', import.meta.url).href}
+              alt="Scan to support"
+              className="w-48 h-48 mx-auto object-contain"
+            />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            {isHindi ? 'स्कैन करके सीधे भुगतान करें' : 'Scan to pay directly via UPI'}
+          </p>
+        </div>
+      </section>
+
+      {/* Voluntary Charity */}
+      <section className="card mb-6 animate-slide-up" style={{ animationDelay: '0.35s' }}>
         <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
           🤲 {isHindi ? 'स्वैच्छिक दान (सदक़ा)' : 'Voluntary Charity (Sadaqah)'}
         </h3>
@@ -230,31 +255,6 @@ export default function ResultsScreen() {
               <FiExternalLink className="w-4 h-4 text-gray-400" />
             </a>
           ))}
-        </div>
-      </section>
-
-      {/* Community Support */}
-      <section className="card mb-6 animate-slide-up border-2 border-primary-200 dark:border-primary-800" style={{ animationDelay: '0.35s' }}>
-        <div className="text-center">
-          <span className="text-3xl mb-3 block">💚</span>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
-            {isHindi ? 'हमारी कम्युनिटी को सपोर्ट करें' : 'Support Our Community'}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed max-w-md mx-auto">
-            {isHindi
-              ? 'यह ज़कात कैलकुलेटर किसी संगठन द्वारा फंड नहीं किया जाता — यह पूरी तरह से हमारी कम्युनिटी के भाइयों और बहनों के सहयोग से चलता है। आपका छोटा सा योगदान इस सेवा को ज़िंदा रखता है, ताकि लाखों मुसलमान मुफ़्त में अपनी ज़कात की गणना कर सकें। जज़ाकल्लाहु खैरन।'
-              : 'This Zakat Calculator is not funded by any organization — it is built and maintained entirely by our community. Your small contribution keeps this service alive, so that millions of Muslims can calculate their Zakat for free. Every rupee counts. JazakAllahu Khairan.'}
-          </p>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 inline-block mb-3 shadow-sm">
-            <img
-              src={new URL('../../assets/qr-code.png', import.meta.url).href}
-              alt="Scan to support"
-              className="w-48 h-48 mx-auto object-contain"
-            />
-          </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {isHindi ? 'स्कैन करके सीधे भुगतान करें' : 'Scan to pay directly via UPI'}
-          </p>
         </div>
       </section>
 

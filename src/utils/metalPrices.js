@@ -10,8 +10,8 @@
 
 import { GRAMS_PER_TOLA } from './nisab';
 
-const HARDCODED_GOLD_PRICE_INR = 6500; // per gram, conservative estimate
-const HARDCODED_SILVER_PRICE_INR = 80; // per gram
+const HARDCODED_GOLD_PRICE_INR = 15000; // per gram, conservative estimate
+const HARDCODED_SILVER_PRICE_INR = 300; // per gram
 
 const GOLD_CACHE_KEY = 'zc_gold_price';
 const SILVER_CACHE_KEY = 'zc_silver_price';
