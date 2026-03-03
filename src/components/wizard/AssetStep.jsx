@@ -4,11 +4,11 @@ import useTranslation from "../../hooks/useTranslation";
 import useZakatStore from "../../store/zakatStore";
 import { formatCurrency, getCurrencyInfo } from "../../utils/currency";
 import {
-    KARAT_PURITY,
-    calculateGoldValue,
-    calculateMetalValue,
-    gramsToTola,
-    tolaToGrams,
+  KARAT_PURITY,
+  calculateGoldValue,
+  calculateMetalValue,
+  gramsToTola,
+  tolaToGrams,
 } from "../../utils/metalPrices";
 
 const KARATS = ["24K", "22K", "18K"];
@@ -218,7 +218,7 @@ function GoldWeightInput({ goldPrice, currency, language }) {
       ))}
 
       {/* Price row + pencil icon */}
-      <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1">
+      <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-3">
         {goldPrice > 0 && (
           <div className="flex items-center justify-center gap-2">
             <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
@@ -231,10 +231,10 @@ function GoldWeightInput({ goldPrice, currency, language }) {
             </p>
             <button
               onClick={() => setShowDialog(true)}
-              className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0"
+              className="hover:text-primary-500 transition-colors flex-shrink-0"
               title="Edit price manually"
             >
-              <FiEdit2 className="w-3.5 h-3.5" />
+              <FiEdit2 className="w-3.5 h-3.5 pencil-shimmer" />
             </button>
           </div>
         )}
@@ -359,10 +359,10 @@ function WeightInput({
           </p>
           <button
             onClick={() => setShowDialog(true)}
-            className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0"
+            className="hover:text-primary-500 transition-colors flex-shrink-0"
             title="Edit price manually"
           >
-            <FiEdit2 className="w-3.5 h-3.5" />
+            <FiEdit2 className="w-3.5 h-3.5 pencil-shimmer" />
           </button>
         </div>
       )}
