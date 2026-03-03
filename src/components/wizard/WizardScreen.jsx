@@ -1,15 +1,16 @@
-import { useEffect } from 'react';
-import { FiArrowLeft, FiArrowRight, FiSkipForward } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
-import useSEO from '../../hooks/useSEO';
-import useZakatStore from '../../store/zakatStore';
-import { ASSET_CATEGORIES } from '../../utils/assetTypes';
-import { fetchExchangeRates } from '../../utils/currency';
-import StickyFooter from '../ui/StickyFooter';
-import AssetStep from './AssetStep';
-import DeductionsStep from './DeductionsStep';
-import ReviewStep from './ReviewStep';
-import SettingsStep from './SettingsStep';
+import { useEffect } from "react";
+import { FiArrowLeft, FiArrowRight, FiSkipForward } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import useSEO from "../../hooks/useSEO";
+import useTranslation from "../../hooks/useTranslation";
+import useZakatStore from "../../store/zakatStore";
+import { ASSET_CATEGORIES } from "../../utils/assetTypes";
+import { fetchExchangeRates } from "../../utils/currency";
+import StickyFooter from "../ui/StickyFooter";
+import AssetStep from "./AssetStep";
+import DeductionsStep from "./DeductionsStep";
+import ReviewStep from "./ReviewStep";
+import SettingsStep from "./SettingsStep";
 
 // Steps = Settings + 10 Asset Categories + Deductions + Review = 13 total
 const SETTINGS_STEP = 0;
@@ -20,6 +21,7 @@ const TOTAL_STEPS = ASSET_CATEGORIES.length + 3;
 export default function WizardScreen() {
   const navigate = useNavigate();
   const { currentStep, setCurrentStep, setExchangeRates } = useZakatStore();
+  const { t } = useTranslation();
 
   useSEO({
     title: `Calculate Zakat — Step ${currentStep + 1} of ${TOTAL_STEPS}`,
@@ -28,33 +30,33 @@ export default function WizardScreen() {
 
   // Fetch exchange rates only (needed for multi-currency display)
   useEffect(() => {
-    fetchExchangeRates('INR').then(({ rates }) => setExchangeRates(rates));
+    fetchExchangeRates("INR").then(({ rates }) => setExchangeRates(rates));
   }, []);
 
   const handleNext = () => {
     if (currentStep === REVIEW_STEP) {
       const store = useZakatStore.getState();
       store.calculateResult();
-      navigate('/results');
+      navigate("/results");
     } else {
       setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
     if (currentStep === 0) {
-      navigate('/');
+      navigate("/");
     } else {
       setCurrentStep(currentStep - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleSkip = () => {
     if (currentStep < REVIEW_STEP) {
       setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -68,13 +70,15 @@ export default function WizardScreen() {
   };
 
   const getStepLabel = () => {
-    if (currentStep === SETTINGS_STEP) return 'Settings';
-    if (currentStep === DEDUCTIONS_STEP) return 'Deductions';
-    if (currentStep === REVIEW_STEP) return 'Review';
-    return ASSET_CATEGORIES[currentStep - 1]?.label || '';
+    if (currentStep === SETTINGS_STEP) return t("wizard.settings");
+    if (currentStep === DEDUCTIONS_STEP) return t("wizard.deductions");
+    if (currentStep === REVIEW_STEP) return t("wizard.review");
+    const catId = ASSET_CATEGORIES[currentStep - 1]?.id;
+    return catId ? t(`asset.${catId}.label`) : "";
   };
 
-  const isAssetStep = currentStep > SETTINGS_STEP && currentStep < DEDUCTIONS_STEP;
+  const isAssetStep =
+    currentStep > SETTINGS_STEP && currentStep < DEDUCTIONS_STEP;
   const progress = ((currentStep + 1) / TOTAL_STEPS) * 100;
 
   return (
@@ -83,7 +87,10 @@ export default function WizardScreen() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Step {currentStep + 1} of {TOTAL_STEPS}
+            {t("wizard.stepOf", {
+              current: currentStep + 1,
+              total: TOTAL_STEPS,
+            })}
           </span>
           <span className="text-sm font-medium text-primary-500">
             {Math.round(progress)}%
@@ -100,8 +107,6 @@ export default function WizardScreen() {
         </p>
       </div>
 
-
-
       {/* Step content */}
       <div className="animate-fade-in" key={currentStep}>
         {renderStep()}
@@ -117,7 +122,7 @@ export default function WizardScreen() {
               className="btn-secondary flex items-center gap-2 py-2.5 px-4 text-sm"
             >
               <FiArrowLeft className="w-4 h-4" />
-              {currentStep === 0 ? 'Home' : 'Back'}
+              {currentStep === 0 ? t("wizard.home") : t("wizard.back")}
             </button>
 
             <div className="flex items-center gap-2">
@@ -128,14 +133,16 @@ export default function WizardScreen() {
                     dark:hover:text-gray-200 px-3 py-2.5 min-h-tap flex items-center gap-1 transition-colors"
                 >
                   <FiSkipForward className="w-4 h-4" />
-                  Skip
+                  {t("wizard.skip")}
                 </button>
               )}
               <button
                 onClick={handleNext}
                 className="btn-primary flex items-center gap-2 py-2.5 px-6 text-sm"
               >
-                {currentStep === REVIEW_STEP ? 'Calculate' : 'Next'}
+                {currentStep === REVIEW_STEP
+                  ? t("wizard.calculate")
+                  : t("wizard.next")}
                 <FiArrowRight className="w-4 h-4" />
               </button>
             </div>

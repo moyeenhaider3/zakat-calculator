@@ -5,8 +5,8 @@
  * Includes per-karat gold breakdown when available.
  */
 
-import jsPDF from 'jspdf';
-import { formatCurrency } from './currency';
+import jsPDF from "jspdf";
+import { formatCurrency } from "./currency";
 
 /**
  * Export Zakat summary as a downloadable PDF.
@@ -17,7 +17,13 @@ import { formatCurrency } from './currency';
  * @param {string} nisabStandard  - gold | silver
  * @param {Array}  goldKaratBreakdown - from getGoldKaratBreakdown(), optional
  */
-export function exportZakatSummary(result, currency, madhab, nisabStandard, goldKaratBreakdown = []) {
+export function exportZakatSummary(
+  result,
+  currency,
+  madhab,
+  nisabStandard,
+  goldKaratBreakdown = [],
+) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 20;
@@ -25,12 +31,18 @@ export function exportZakatSummary(result, currency, madhab, nisabStandard, gold
   // Header
   doc.setFontSize(20);
   doc.setTextColor(27, 107, 58);
-  doc.text('Zakat Calculation Summary', pageWidth / 2, y, { align: 'center' });
+  doc.text("Zakat Calculation Summary", pageWidth / 2, y, { align: "center" });
   y += 10;
 
   doc.setFontSize(10);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(
+    `Generated on: ${new Date().toLocaleDateString(undefined, { dateStyle: "long" })}`,
+
+    pageWidth / 2,
+    y,
+    { align: "center" },
+  );
   y += 15;
 
   // Separator
@@ -45,26 +57,29 @@ export function exportZakatSummary(result, currency, madhab, nisabStandard, gold
   if (result.isLiable) {
     doc.text(`Zakat Due: ${formatCurrency(result.zakatDue, currency)}`, 20, y);
   } else {
-    doc.text('Zakat is not due this year', 20, y);
+    doc.text("Zakat is not due this year", 20, y);
   }
   y += 12;
 
   // Summary details
   doc.setFontSize(10);
   const details = [
-    ['Madhab (School)', madhab.charAt(0).toUpperCase() + madhab.slice(1)],
-    ['Nisab Standard', nisabStandard.charAt(0).toUpperCase() + nisabStandard.slice(1)],
-    ['Nisab Value (INR)', formatCurrency(result.nisabValue, 'INR')],
-    ['Total Assets', formatCurrency(result.totalAssets, currency)],
-    ['Total Deductions', formatCurrency(result.totalDeductions, currency)],
-    ['Net Zakatable Wealth', formatCurrency(result.netZakatable, currency)],
+    ["Madhab (School)", madhab.charAt(0).toUpperCase() + madhab.slice(1)],
+    [
+      "Nisab Standard",
+      nisabStandard.charAt(0).toUpperCase() + nisabStandard.slice(1),
+    ],
+    ["Nisab Value", formatCurrency(result.nisabValue, currency)],
+    ["Total Assets", formatCurrency(result.totalAssets, currency)],
+    ["Total Deductions", formatCurrency(result.totalDeductions, currency)],
+    ["Net Zakatable Wealth", formatCurrency(result.netZakatable, currency)],
   ];
 
   details.forEach(([label, value]) => {
     doc.setTextColor(120, 120, 120);
     doc.text(label, 20, y);
     doc.setTextColor(0, 0, 0);
-    doc.text(value, pageWidth - 20, y, { align: 'right' });
+    doc.text(value, pageWidth - 20, y, { align: "right" });
     y += 7;
   });
 
@@ -78,15 +93,15 @@ export function exportZakatSummary(result, currency, madhab, nisabStandard, gold
 
     doc.setFontSize(12);
     doc.setTextColor(27, 107, 58);
-    doc.text('Asset Breakdown', 20, y);
+    doc.text("Asset Breakdown", 20, y);
     y += 8;
 
     // Table header
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
-    doc.text('Category', 20, y);
-    doc.text('Value', 110, y, { align: 'right' });
-    doc.text('Zakat (2.5%)', pageWidth - 20, y, { align: 'right' });
+    doc.text("Category", 20, y);
+    doc.text("Value", 110, y, { align: "right" });
+    doc.text("Zakat (2.5%)", pageWidth - 20, y, { align: "right" });
     y += 3;
     doc.setDrawColor(200, 200, 200);
     doc.line(20, y, pageWidth - 20, y);
@@ -97,24 +112,35 @@ export function exportZakatSummary(result, currency, madhab, nisabStandard, gold
       .forEach((item) => {
         doc.setTextColor(60, 60, 60);
         doc.text(item.categoryLabel, 20, y);
-        doc.text(formatCurrency(item.amount, currency), 110, y, { align: 'right' });
+        doc.text(formatCurrency(item.amount, currency), 110, y, {
+          align: "right",
+        });
         doc.setTextColor(27, 107, 58);
-        doc.text(formatCurrency(item.zakatAmount, currency), pageWidth - 20, y, { align: 'right' });
+        doc.text(
+          formatCurrency(item.zakatAmount, currency),
+          pageWidth - 20,
+          y,
+          { align: "right" },
+        );
         y += 7;
 
         // Per-karat gold sub-breakdown
-        if (item.categoryId === 'gold' && goldKaratBreakdown.length > 0) {
-          goldKaratBreakdown.forEach(({ karat, grams, pricePerGram, value }) => {
-            doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text(
-              `  ${karat}  ${grams}g @ ${formatCurrency(pricePerGram, 'INR')}/g`,
-              25,
-              y
-            );
-            doc.text(formatCurrency(value, currency), 110, y, { align: 'right' });
-            y += 5;
-          });
+        if (item.categoryId === "gold" && goldKaratBreakdown.length > 0) {
+          goldKaratBreakdown.forEach(
+            ({ karat, grams, pricePerGram, value }) => {
+              doc.setFontSize(8);
+              doc.setTextColor(150, 150, 150);
+              doc.text(
+                `  ${karat}  ${grams}g @ ${formatCurrency(pricePerGram, currency)}/g`,
+                25,
+                y,
+              );
+              doc.text(formatCurrency(value, currency), 110, y, {
+                align: "right",
+              });
+              y += 5;
+            },
+          );
           doc.setFontSize(9);
           y += 1;
         }
@@ -131,7 +157,12 @@ export function exportZakatSummary(result, currency, madhab, nisabStandard, gold
     y += 8;
     doc.setFontSize(14);
     doc.setTextColor(27, 107, 58);
-    doc.text(`Total Zakat Due: ${formatCurrency(result.zakatDue, currency)}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(
+      `Total Zakat Due: ${formatCurrency(result.zakatDue, currency)}`,
+      pageWidth / 2,
+      y,
+      { align: "center" },
+    );
     y += 15;
   }
 
@@ -140,10 +171,10 @@ export function exportZakatSummary(result, currency, madhab, nisabStandard, gold
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
   doc.text(
-    'Calculated using Zakat Calculator | For reference only. Consult a scholar for religious rulings.',
+    "Calculated using Zakat Calculator | For reference only. Consult a scholar for religious rulings.",
     pageWidth / 2,
     footerY,
-    { align: 'center' }
+    { align: "center" },
   );
 
   // Download

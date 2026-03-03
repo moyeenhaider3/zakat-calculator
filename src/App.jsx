@@ -1,13 +1,16 @@
-import { lazy, Suspense, useEffect } from 'react';
-import { Route, Routes } from 'react-router-dom';
-import TopBar from './components/ui/TopBar';
-import useZakatStore from './store/zakatStore';
+import { lazy, Suspense, useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import TopBar from "./components/ui/TopBar";
+import useZakatStore from "./store/zakatStore";
+import { isRTL } from "./utils/translations";
 
-const LandingScreen = lazy(() => import('./components/wizard/LandingScreen'));
-const WizardScreen = lazy(() => import('./components/wizard/WizardScreen'));
-const ResultsScreen = lazy(() => import('./components/results/ResultsScreen'));
-const GlossaryScreen = lazy(() => import('./components/guide/GlossaryScreen'));
-const HowToCalculateScreen = lazy(() => import('./components/guide/HowToCalculateScreen'));
+const LandingScreen = lazy(() => import("./components/wizard/LandingScreen"));
+const WizardScreen = lazy(() => import("./components/wizard/WizardScreen"));
+const ResultsScreen = lazy(() => import("./components/results/ResultsScreen"));
+const GlossaryScreen = lazy(() => import("./components/guide/GlossaryScreen"));
+const HowToCalculateScreen = lazy(
+  () => import("./components/guide/HowToCalculateScreen"),
+);
 
 function LoadingFallback() {
   return (
@@ -22,15 +25,22 @@ function LoadingFallback() {
 
 export default function App() {
   const darkMode = useZakatStore((s) => s.darkMode);
+  const language = useZakatStore((s) => s.language);
 
   // Restore dark mode from persisted state on mount
   useEffect(() => {
     if (darkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [darkMode]);
+
+  // Manage RTL direction and lang attribute
+  useEffect(() => {
+    document.documentElement.dir = isRTL(language) ? "rtl" : "ltr";
+    document.documentElement.lang = language;
+  }, [language]);
 
   return (
     <div className="min-h-screen bg-surface-light dark:bg-surface-dark transition-colors duration-300">
@@ -42,7 +52,10 @@ export default function App() {
             <Route path="/calculator" element={<WizardScreen />} />
             <Route path="/results" element={<ResultsScreen />} />
             <Route path="/glossary" element={<GlossaryScreen />} />
-            <Route path="/how-to-calculate" element={<HowToCalculateScreen />} />
+            <Route
+              path="/how-to-calculate"
+              element={<HowToCalculateScreen />}
+            />
           </Routes>
         </Suspense>
       </main>
