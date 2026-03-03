@@ -5,11 +5,15 @@
  * Includes assets, deductions, settings, prices, and calculation results.
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { calculateGoldValue, getDefaultGoldPrice, getDefaultSilverPrice } from '../utils/metalPrices';
-import { getNisabValue } from '../utils/nisab';
-import { calculateZakat } from '../utils/zakat';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import {
+  calculateGoldValue,
+  getDefaultGoldPrice,
+  getDefaultSilverPrice,
+} from "../utils/metalPrices";
+import { getNisabValue } from "../utils/nisab";
+import { calculateZakat } from "../utils/zakat";
 
 const useZakatStore = create(
   persist(
@@ -21,7 +25,7 @@ const useZakatStore = create(
       weights: {},
 
       // Multi-karat gold weights (grams per karat)
-      goldWeights: { '24K': '', '22K': '', '18K': '' },
+      goldWeights: { "24K": "", "22K": "", "18K": "" },
 
       // Deductions
       deductions: {
@@ -30,10 +34,10 @@ const useZakatStore = create(
       },
 
       // Settings
-      currency: 'INR',
-      madhab: 'hanafi',
-      nisabStandard: 'silver',
-      language: 'en',
+      currency: "INR",
+      madhab: "hanafi",
+      nisabStandard: "silver",
+      language: "en",
       darkMode: false,
 
       // Prices — dynamic defaults per currency, overridable via pencil icon
@@ -86,9 +90,9 @@ const useZakatStore = create(
 
       setDarkMode: (enabled) => {
         if (enabled) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
         set({ darkMode: enabled });
       },
@@ -96,18 +100,15 @@ const useZakatStore = create(
       toggleDarkMode: () => {
         const newMode = !get().darkMode;
         if (newMode) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
         set({ darkMode: newMode });
       },
 
       setPrices: (gold, silver) =>
         set({ goldPrice: gold, silverPrice: silver }),
-
-      setExchangeRates: (rates) => set({ exchangeRates: rates }),
-      setPriceSource: (source) => set({ priceSource: source }),
 
       /**
        * Manual price override for current currency.
@@ -117,16 +118,28 @@ const useZakatStore = create(
       setPriceOverride: (metal, price) =>
         set((state) => {
           const currency = state.currency;
-          const currentOverrides = state.priceOverrides[currency] || { gold: null, silver: null };
+          const currentOverrides = state.priceOverrides[currency] || {
+            gold: null,
+            silver: null,
+          };
           const newCurrencyOverrides = { ...currentOverrides, [metal]: price };
-          const newOverrides = { ...state.priceOverrides, [currency]: newCurrencyOverrides };
+          const newOverrides = {
+            ...state.priceOverrides,
+            [currency]: newCurrencyOverrides,
+          };
 
           return {
             priceOverrides: newOverrides,
-            ...(metal === 'gold' && price !== null ? { goldPrice: price } : {}),
-            ...(metal === 'silver' && price !== null ? { silverPrice: price } : {}),
-            ...(metal === 'gold' && price === null ? { goldPrice: getDefaultGoldPrice(currency) } : {}),
-            ...(metal === 'silver' && price === null ? { silverPrice: getDefaultSilverPrice(currency) } : {}),
+            ...(metal === "gold" && price !== null ? { goldPrice: price } : {}),
+            ...(metal === "silver" && price !== null
+              ? { silverPrice: price }
+              : {}),
+            ...(metal === "gold" && price === null
+              ? { goldPrice: getDefaultGoldPrice(currency) }
+              : {}),
+            ...(metal === "silver" && price === null
+              ? { silverPrice: getDefaultSilverPrice(currency) }
+              : {}),
           };
         }),
 
@@ -136,42 +149,44 @@ const useZakatStore = create(
         const state = get();
 
         // Compute gold value from karat weights, then inject into assets
-        const goldValue = calculateGoldValue(state.goldWeights, state.goldPrice);
-        const assetsWithGold = goldValue > 0
-          ? { ...state.assets, gold: goldValue.toString() }
-          : state.assets;
+        const goldValue = calculateGoldValue(
+          state.goldWeights,
+          state.goldPrice,
+        );
+        const assetsWithGold =
+          goldValue > 0
+            ? { ...state.assets, gold: goldValue.toString() }
+            : state.assets;
 
         const nisabValue = getNisabValue(
           state.nisabStandard,
           state.goldPrice,
-          state.silverPrice
+          state.silverPrice,
         );
         const result = calculateZakat(
           assetsWithGold,
           state.deductions,
           nisabValue,
-          state.madhab
+          state.madhab,
         );
         set({ result });
         return result;
       },
 
       resetAll: () => {
-        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.remove("dark");
         set({
           assets: {},
           weights: {},
-          goldWeights: { '24K': '', '22K': '', '18K': '' },
+          goldWeights: { "24K": "", "22K": "", "18K": "" },
           deductions: { debts: 0, liabilities: 0 },
-          currency: 'INR',
-          madhab: 'hanafi',
-          nisabStandard: 'silver',
-          language: 'en',
+          currency: "INR",
+          madhab: "hanafi",
+          nisabStandard: "silver",
+          language: "en",
           darkMode: false,
-          goldPrice: getDefaultGoldPrice('INR'),
-          silverPrice: getDefaultSilverPrice('INR'),
-          exchangeRates: null,
-          priceSource: null,
+          goldPrice: getDefaultGoldPrice("INR"),
+          silverPrice: getDefaultSilverPrice("INR"),
           priceOverrides: {},
           currentStep: 0,
           result: null,
@@ -182,7 +197,7 @@ const useZakatStore = create(
         set({
           assets: {},
           weights: {},
-          goldWeights: { '24K': '', '22K': '', '18K': '' },
+          goldWeights: { "24K": "", "22K": "", "18K": "" },
           deductions: { debts: 0, liabilities: 0 },
           currentStep: 0,
           result: null,
@@ -190,7 +205,7 @@ const useZakatStore = create(
       },
     }),
     {
-      name: 'zakat-calculator-storage',
+      name: "zakat-calculator-storage",
       partialize: (state) => ({
         assets: state.assets,
         weights: state.weights,
@@ -206,8 +221,8 @@ const useZakatStore = create(
         priceOverrides: state.priceOverrides,
         currentStep: state.currentStep,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export default useZakatStore;

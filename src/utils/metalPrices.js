@@ -14,13 +14,11 @@
  * 1 Tola = 11.664 grams
  */
 
-import { GRAMS_PER_TOLA } from './nisab';
-
-export const DEFAULT_GOLD_PRICE_INR = 16100;  // kept for backward compat
-export const DEFAULT_SILVER_PRICE_INR = 290;   // kept for backward compat
+import { GRAMS_PER_TOLA } from "./nisab";
 
 /**
  * Default gold (24K) and silver prices per gram by currency.
+ * This is the SINGLE SOURCE OF TRUTH for all metal prices.
  * Values are conservative estimates for Feb 2026.
  * Users can override via the pencil icon at any time.
  *
@@ -28,14 +26,14 @@ export const DEFAULT_SILVER_PRICE_INR = 290;   // kept for backward compat
  */
 export const DEFAULT_METAL_PRICES = {
   /*        gold/g         silver/g   */
-  INR: { gold: 16100,      silver: 290   },
-  USD: { gold: 160,        silver: 2.4   },
-  GBP: { gold: 117,        silver: 1.8   },
-  EUR: { gold: 134,        silver: 2.1   },
-  AED: { gold: 588,        silver: 8.8   },
-  SAR: { gold: 611,        silver: 9.1   },
-  MYR: { gold: 740,        silver: 11.0  },
-  CAD: { gold: 215,        silver: 3.2   },
+  INR: { gold: 17000, silver: 295 },
+  USD: { gold: 168, silver: 2.9 },
+  GBP: { gold: 136, silver: 2.3 },
+  EUR: { gold: 155, silver: 2.6 },
+  AED: { gold: 618, silver: 10.7 },
+  SAR: { gold: 630, silver: 10.9 },
+  MYR: { gold: 821, silver: 14.2 },
+  CAD: { gold: 225, silver: 3.9 },
 };
 
 /** Get default gold price for a given currency (falls back to INR). */
@@ -45,13 +43,15 @@ export function getDefaultGoldPrice(currency) {
 
 /** Get default silver price for a given currency (falls back to INR). */
 export function getDefaultSilverPrice(currency) {
-  return DEFAULT_METAL_PRICES[currency]?.silver ?? DEFAULT_METAL_PRICES.INR.silver;
+  return (
+    DEFAULT_METAL_PRICES[currency]?.silver ?? DEFAULT_METAL_PRICES.INR.silver
+  );
 }
 
 export const KARAT_PURITY = {
-  '24K': 1.0,
-  '22K': 0.916,
-  '18K': 0.75,
+  "24K": 1.0,
+  "22K": 0.916,
+  "18K": 0.75,
 };
 
 // ─── Gold calculation engine ──────────────────────────────────────────────────
@@ -82,7 +82,8 @@ export function getGoldKaratBreakdown(karatWeights, pricePerGram24K) {
     .map(([karat, grams]) => {
       const purity = KARAT_PURITY[karat] ?? 0;
       const pricePerGram = Math.round(pricePerGram24K * purity * 100) / 100;
-      const value = Math.round((parseFloat(grams) || 0) * pricePerGram * 100) / 100;
+      const value =
+        Math.round((parseFloat(grams) || 0) * pricePerGram * 100) / 100;
       return { karat, grams: parseFloat(grams), purity, pricePerGram, value };
     });
 }

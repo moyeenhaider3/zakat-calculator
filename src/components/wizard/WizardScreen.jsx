@@ -1,11 +1,9 @@
-import { useEffect } from "react";
 import { FiArrowLeft, FiArrowRight, FiSkipForward } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import useSEO from "../../hooks/useSEO";
 import useTranslation from "../../hooks/useTranslation";
 import useZakatStore from "../../store/zakatStore";
 import { ASSET_CATEGORIES } from "../../utils/assetTypes";
-import { fetchExchangeRates } from "../../utils/currency";
 import StickyFooter from "../ui/StickyFooter";
 import AssetStep from "./AssetStep";
 import DeductionsStep from "./DeductionsStep";
@@ -20,18 +18,13 @@ const TOTAL_STEPS = ASSET_CATEGORIES.length + 3;
 
 export default function WizardScreen() {
   const navigate = useNavigate();
-  const { currentStep, setCurrentStep, setExchangeRates } = useZakatStore();
+  const { currentStep, setCurrentStep } = useZakatStore();
   const { t } = useTranslation();
 
   useSEO({
     title: `Calculate Zakat — Step ${currentStep + 1} of ${TOTAL_STEPS}`,
     noIndex: true,
   });
-
-  // Fetch exchange rates only (needed for multi-currency display)
-  useEffect(() => {
-    fetchExchangeRates("INR").then(({ rates }) => setExchangeRates(rates));
-  }, []);
 
   const handleNext = () => {
     if (currentStep === REVIEW_STEP) {

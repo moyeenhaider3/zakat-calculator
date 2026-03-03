@@ -19,44 +19,38 @@ export const SILVER_NISAB_GRAMS = 612.36;
 // Tola conversion (1 tola = 11.664 grams, standard in Indian/Pakistani markets)
 export const GRAMS_PER_TOLA = 11.664;
 
-// Fallback prices per gram in INR (updated periodically)
-export const FALLBACK_GOLD_PRICE_INR = 6500;
-export const FALLBACK_SILVER_PRICE_INR = 80;
-
 /**
- * Calculate the Nisab threshold value in the given currency.
+ * Calculate the Nisab threshold value in the selected currency.
+ * Prices come directly from DEFAULT_METAL_PRICES for the selected currency.
  *
  * @param {'gold' | 'silver'} standard - Which Nisab standard to use
- * @param {number} goldPricePerGram - Current gold price per gram
- * @param {number} silverPricePerGram - Current silver price per gram
- * @returns {number} Nisab value in the currency of the provided prices
+ * @param {number} goldPricePerGram - Gold price per gram in selected currency
+ * @param {number} silverPricePerGram - Silver price per gram in selected currency
+ * @returns {number} Nisab value in the selected currency
  */
 export function getNisabValue(standard, goldPricePerGram, silverPricePerGram) {
-  const goldPrice = goldPricePerGram || FALLBACK_GOLD_PRICE_INR;
-  const silverPrice = silverPricePerGram || FALLBACK_SILVER_PRICE_INR;
-
-  if (standard === 'gold') {
-    return Math.round(GOLD_NISAB_GRAMS * goldPrice * 100) / 100;
+  if (standard === "gold") {
+    return Math.round(GOLD_NISAB_GRAMS * (goldPricePerGram || 0) * 100) / 100;
   }
-  return Math.round(SILVER_NISAB_GRAMS * silverPrice * 100) / 100;
+  return Math.round(SILVER_NISAB_GRAMS * (silverPricePerGram || 0) * 100) / 100;
 }
 
 /**
  * Get a human-readable explanation of the Nisab.
  */
 export function getNisabExplanation(standard) {
-  if (standard === 'gold') {
+  if (standard === "gold") {
     return {
       weight: `${GOLD_NISAB_GRAMS}g (≈ ${(GOLD_NISAB_GRAMS / GRAMS_PER_TOLA).toFixed(1)} tola)`,
-      metal: 'gold',
+      metal: "gold",
       description:
-        'The Gold Nisab is the value of 87.48 grams of gold. If your total Zakatable wealth equals or exceeds this amount, Zakat is obligatory on you.',
+        "The Gold Nisab is the value of 87.48 grams of gold. If your total Zakatable wealth equals or exceeds this amount, Zakat is obligatory on you.",
     };
   }
   return {
     weight: `${SILVER_NISAB_GRAMS}g (≈ ${(SILVER_NISAB_GRAMS / GRAMS_PER_TOLA).toFixed(1)} tola)`,
-    metal: 'silver',
+    metal: "silver",
     description:
-      'The Silver Nisab is the value of 612.36 grams of silver. This is the more commonly used standard as it results in a lower threshold, meaning more people fulfill the obligation of Zakat.',
+      "The Silver Nisab is the value of 612.36 grams of silver. This is the more commonly used standard as it results in a lower threshold, meaning more people fulfill the obligation of Zakat.",
   };
 }
