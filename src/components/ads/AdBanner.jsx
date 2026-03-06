@@ -6,12 +6,12 @@
  * Toggle with VITE_ADS_ENABLED env variable.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-const isAdsEnabled = import.meta.env.VITE_ADS_ENABLED === 'true';
-const isDev = import.meta.env.VITE_AD_ENV === 'development';
-const pubId = import.meta.env.VITE_ADSENSE_PUB_ID || '';
-const slotId = import.meta.env.VITE_AD_SLOT_BANNER || '';
+const isAdsEnabled = import.meta.env.VITE_ADS_ENABLED === "true";
+const isDev = import.meta.env.VITE_AD_ENV === "development";
+const pubId = import.meta.env.VITE_ADSENSE_PUB_ID || "";
+const slotId = import.meta.env.VITE_AD_SLOT_BANNER || "";
 
 export default function AdBanner() {
   const adRef = useRef(null);
@@ -50,10 +50,11 @@ export default function AdBanner() {
       <ins
         ref={adRef}
         className="adsbygoogle"
-        style={{ display: 'block', height: '50px' }}
+        style={{ display: "block" }}
         data-ad-client={pubId}
         data-ad-slot={slotId}
-        data-ad-format="banner"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
       />
     </div>
   );

@@ -6,12 +6,12 @@
  * Shows test placeholder in development mode.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-const isAdsEnabled = import.meta.env.VITE_ADS_ENABLED === 'true';
-const isDev = import.meta.env.VITE_AD_ENV === 'development';
-const pubId = import.meta.env.VITE_ADSENSE_PUB_ID || '';
-const slotId = import.meta.env.VITE_AD_SLOT_INFEED || '';
+const isAdsEnabled = import.meta.env.VITE_ADS_ENABLED === "true";
+const isDev = import.meta.env.VITE_AD_ENV === "development";
+const pubId = import.meta.env.VITE_ADSENSE_PUB_ID || "";
+const slotId = import.meta.env.VITE_AD_SLOT_INFEED || "";
 
 export default function AdInFeed() {
   const [shouldRender, setShouldRender] = useState(false);
@@ -56,11 +56,11 @@ export default function AdInFeed() {
     <div className="my-6" role="complementary" aria-label="Advertisement">
       <ins
         className="adsbygoogle"
-        style={{ display: 'block' }}
+        style={{ display: "block" }}
         data-ad-client={pubId}
         data-ad-slot={slotId}
         data-ad-format="fluid"
-        data-ad-layout-key="-ef+6k-30-ac+ty"
+        data-ad-layout-key="-hi+d-3-4b+7w"
       />
     </div>
   );

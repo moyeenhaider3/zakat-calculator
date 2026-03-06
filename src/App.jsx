@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
+import AdBanner from "./components/ads/AdBanner";
 import TopBar from "./components/ui/TopBar";
 import useZakatStore from "./store/zakatStore";
 import { isRTL } from "./utils/translations";
@@ -59,6 +60,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+      <AdBanner />
     </div>
   );
 }
